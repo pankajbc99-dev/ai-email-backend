@@ -1,0 +1,9 @@
+ai-email-backend/
+├── controllers/
+│   └── aiController.js
+├── routes/
+│   └── generate.js
+├── server.js
+├── package.json
+├── .gitignore
+└── README.md
