@@ -1,64 +1,40 @@
-const axios = require("axios");
-const { createClient } = require("@supabase/supabase-js");
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY
-);
-
 exports.generateEmail = async (req, res) => {
   try {
-    const { emailType, recipient, purpose, tone } = req.body;
+    const { prompt } = req.body;
 
-    if (!emailType || !recipient || !purpose || !tone) {
-      return res.status(400).json({
-        success: false,
-        message: "All fields are required"
+    if (!prompt) {
+      return res.status(400).json({ error: "Prompt is required" });
+    }
+
+    // ✅ Get supabase from app.locals
+    const supabase = req.app.locals.supabase;
+
+    if (!supabase) {
+      return res.status(500).json({
+        error: "Supabase not initialized"
       });
     }
 
-    const prompt = `
-Write a ${tone} ${emailType}.
-Recipient: ${recipient}
-Purpose: ${purpose}
-Limit: 150 words.
-`;
+    // (AI logic will go here later)
+    const generatedEmail = `Generated email for: ${prompt}`;
 
-    const hfResponse = await axios.post(
-      "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
+    // ✅ Save to Supabase
+    const { error } = await supabase.from("emails").insert([
       {
-        inputs: prompt,
-        parameters: {
-          max_new_tokens: 250,
-          temperature: 0.7
-        }
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.HF_API_KEY}`,
-          "Content-Type": "application/json"
-        }
+        prompt: prompt,
+        generated_email: generatedEmail
       }
-    );
-
-    const generatedText =
-      hfResponse.data?.[0]?.generated_text || "No response generated.";
-
-    await supabase.from("email_logs").insert([
-      { email_type: emailType }
     ]);
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
 
     res.json({
       success: true,
-      email: generatedText
+      email: generatedEmail
     });
-
-  } catch (error) {
-    console.error("Generation Error:", error.response?.data || error.message);
-
-    res.status(500).json({
-      success: false,
-      error: "Failed to generate email. Please try again."
-    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
