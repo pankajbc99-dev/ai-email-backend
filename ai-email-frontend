@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AI Email Generator</title>
+</head>
+<body>
+  <h2>AI Email Generator</h2>
+
+  <select id="emailType">
+    <option>Internship Email</option>
+    <option>Leave Application</option>
+    <option>Scholarship Request</option>
+  </select><br><br>
+
+  <input id="recipient" placeholder="Recipient"><br><br>
+  <textarea id="purpose" placeholder="Purpose"></textarea><br><br>
+
+  <button onclick="generate()">Generate</button>
+  <pre id="result"></pre>
+
+  <script>
+    async function generate() {
+      const res = await fetch("https://YOUR-RENDER-URL.onrender.com/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          emailType: emailType.value,
+          recipient: recipient.value,
+          purpose: purpose.value,
+          tone: "Formal"
+        })
+      });
+      const data = await res.json();
+      result.innerText = data.email;
+    }
+  </script>
+</body>
+</html>
