@@ -7,32 +7,44 @@ const generateRoute = require("./routes/generate");
 
 const app = express();
 
-/* =======================
-   SUPABASE SETUP (HERE)
-   ======================= */
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  console.error("❌ Supabase environment variables missing");
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-// Make supabase available in routes
-app.locals.supabase = supabase;
-
-/* ======================= */
-
 app.use(cors());
 app.use(express.json());
 
+// ===== DEBUG ENV (VERY IMPORTANT) =====
+console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
+console.log("SUPABASE_ANON_KEY EXISTS:", !!process.env.SUPABASE_ANON_KEY);
+
+// ===== SUPABASE INIT (SAFE) =====
+let supabase = null;
+
+if (
+  process.env.SUPABASE_URL &&
+  process.env.SUPABASE_URL.startsWith("https://") &&
+  process.env.SUPABASE_ANON_KEY
+) {
+  supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_ANON_KEY
+  );
+  console.log("✅ Supabase client initialized");
+} else {
+  console.log("❌ Supabase NOT initialized (check env vars)");
+}
+
+app.locals.supabase = supabase;
+
+// ===== ROUTES =====
 app.get("/", (req, res) => {
   res.send("AI Email Generator Backend is running");
 });
 
-/* 🔍 TEST SUPABASE CONNECTION */
 app.get("/test-supabase", async (req, res) => {
+  if (!req.app.locals.supabase) {
+    return res.status(500).json({
+      error: "Supabase not initialized. Check environment variables."
+    });
+  }
+
   const { data, error } = await req.app.locals.supabase
     .from("emails")
     .select("*")
@@ -47,7 +59,8 @@ app.get("/test-supabase", async (req, res) => {
 
 app.use("/api/generate", generateRoute);
 
+// ===== START SERVER =====
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
