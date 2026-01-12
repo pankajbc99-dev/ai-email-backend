@@ -8,17 +8,10 @@ exports.generateEmail = async (req, res) => {
       return res.status(400).json({ error: "Prompt is required" });
     }
 
-    // Supabase instance
-    const supabase = req.app.locals.supabase;
-    if (!supabase) {
-      return res.status(500).json({ error: "Supabase not initialized" });
-    }
-
-    // 🔹 Hugging Face API call
-    const hfResponse = await axios.post(
+    const response = await axios.post(
       "https://api-inference.huggingface.co/models/google/flan-t5-base",
       {
-        inputs: `Write a professional email about: ${prompt}`
+        inputs: `Write a professional email:\n${prompt}`
       },
       {
         headers: {
@@ -28,28 +21,16 @@ exports.generateEmail = async (req, res) => {
       }
     );
 
-    const generatedEmail =
-      hfResponse.data?.[0]?.generated_text || "No response generated";
+    const output =
+      response.data?.[0]?.generated_text ||
+      response.data?.generated_text ||
+      "No response generated";
 
-    // 🔹 Save to Supabase
-    const { error } = await supabase.from("emails").insert([
-      {
-        prompt,
-        generated_email: generatedEmail
-      }
-    ]);
-
-    if (error) {
-      return res.status(500).json({ error: error.message });
-    }
-
-    res.json({
-      success: true,
-      email: generatedEmail
+    res.json({ email: output });
+  } catch (error) {
+    console.error("HF ERROR:", error.response?.data || error.message);
+    res.status(500).json({
+      error: error.response?.data || error.message
     });
-
-  } catch (err) {
-    console.error("AI Error:", err.message);
-    res.status(500).json({ error: err.message });
   }
 };
