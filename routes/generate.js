@@ -11,30 +11,27 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Prompt is required" });
     }
 
-    const response = await axios.post(
-      "https://router.huggingface.co/v1/chat/completions",
+    const hfResponse = await axios.post(
+      "https://api-inference.huggingface.co/models/google/flan-t5-large",
       {
-        model: "mistralai/Mistral-7B-Instruct-v0.2",
-        messages: [
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        max_tokens: 300
+        inputs: prompt,
+        parameters: {
+          max_new_tokens: 300
+        }
       },
       {
         headers: {
           Authorization: `Bearer ${process.env.HF_API_KEY}`,
           "Content-Type": "application/json"
-        }
+        },
+        timeout: 60000
       }
     );
 
-    const generatedText =
-      response.data.choices?.[0]?.message?.content || "No response";
+    res.json({
+      generatedText: hfResponse.data[0]?.generated_text || "No output"
+    });
 
-    res.json({ generatedText });
   } catch (err) {
     console.error("HF ERROR:", err.response?.data || err.message);
 
