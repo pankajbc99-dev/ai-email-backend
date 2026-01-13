@@ -12,13 +12,17 @@ router.post("/", async (req, res) => {
     }
 
     const response = await axios.post(
-      "https://router.huggingface.co/hf-inference/models/HuggingFaceH4/zephyr-7b-beta",
+      "https://router.huggingface.co/v1/chat/completions",
       {
-        inputs: prompt,
-        parameters: {
-          max_new_tokens: 200,
-          temperature: 0.7
-        }
+        model: "mistralai/Mistral-7B-Instruct-v0.2",
+        messages: [
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 300
       },
       {
         headers: {
@@ -29,12 +33,15 @@ router.post("/", async (req, res) => {
     );
 
     res.json({
-      generatedText: response.data[0].generated_text
+      generatedText: response.data.choices[0].message.content
     });
 
   } catch (err) {
     console.error("hf error:", err.response?.data || err.message);
-    res.status(500).json({ error: "Hugging Face generation failed" });
+    res.status(500).json({
+      error: "HF generation failed",
+      details: err.response?.data
+    });
   }
 });
 
