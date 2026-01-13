@@ -1,7 +1,9 @@
 const express = require("express");
-const axios = require("axios");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const router = express.Router();
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 router.post("/", async (req, res) => {
   try {
@@ -11,33 +13,22 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Prompt is required" });
     }
 
-    const response = await axios.post(
-      "https://router.huggingface.co/hf-inference/models/google/flan-t5-small",
-      {
-        inputs: prompt,
-        parameters: {
-          max_new_tokens: 200
-        }
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.HF_API_KEY}`,
-          "Content-Type": "application/json"
-        },
-        timeout: 60000
-      }
-    );
-
-    res.json({
-      generatedText: response.data[0]?.generated_text || "No output"
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash"
     });
 
-  } catch (err) {
-    console.error("HF ERROR:", err.response?.data || err.message);
+    const result = await model.generateContent(prompt);
+    const response = result.response.text();
 
+    res.json({
+      generatedText: response
+    });
+
+  } catch (error) {
+    console.error("Gemini Error:", error.message);
     res.status(500).json({
-      error: "Hugging Face generation failed",
-      hf: err.response?.data || err.message
+      error: "Gemini generation failed",
+      details: error.message
     });
   }
 });
