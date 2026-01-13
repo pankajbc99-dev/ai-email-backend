@@ -11,12 +11,12 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Prompt is required" });
     }
 
-    const hfResponse = await axios.post(
-      "https://api-inference.huggingface.co/models/google/flan-t5-large",
+    const response = await axios.post(
+      "https://router.huggingface.co/hf-inference/models/google/flan-t5-small",
       {
         inputs: prompt,
         parameters: {
-          max_new_tokens: 300
+          max_new_tokens: 200
         }
       },
       {
@@ -29,7 +29,7 @@ router.post("/", async (req, res) => {
     );
 
     res.json({
-      generatedText: hfResponse.data[0]?.generated_text || "No output"
+      generatedText: response.data[0]?.generated_text || "No output"
     });
 
   } catch (err) {
