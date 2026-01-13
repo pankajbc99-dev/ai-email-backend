@@ -37,12 +37,13 @@ router.post("/", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("hf error:", err.response?.data || err.message);
-    res.status(500).json({
-      error: "HF generation failed",
-      details: err.response?.data
-    });
-  }
-});
+  console.error("HF FULL ERROR:", err.response?.data || err);
+
+  res.status(500).json({
+    error: "Hugging Face generation failed",
+    hf: err.response?.data || err.message
+  });
+}
+
 
 module.exports = router;
