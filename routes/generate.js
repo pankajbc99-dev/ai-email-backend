@@ -13,10 +13,7 @@ router.post("/", async (req, res) => {
     }
 
     // ✅ CORRECT MODEL
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-    });
-
+    const model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
     const result = await model.generateContent(prompt);
     const response = result.response.text();
 
