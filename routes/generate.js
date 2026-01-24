@@ -12,8 +12,11 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Prompt is required" });
     }
 
-    // ✅ CORRECT MODEL
-    const model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
+    // ✅ ONLY ONE MODEL — SUPPORTED
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+    });
+
     const result = await model.generateContent(prompt);
     const response = result.response.text();
 
